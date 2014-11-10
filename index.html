@@ -8,37 +8,43 @@
 
 <script type="text/javascript">
 var lines = [ { name: "Fairfax", line: "Hi there Elsie!" },
+			  { name: "Phoebe", line: "I'm here too you know!" },
 			  { name: "Elsie", line: "Hi Fairfie" },
-			  { name: "Fairfax", line: "Wanna hang?" }
+			  { name: "Fairfax", line: "Wanna hang?" },
+			  { name: "Elsie", line: "Sure" },
+			  { name: "Phoebe", line: "I do too!" }
 			];
 
 var my_name = "Elsie";
 var current_index = 0;
-var t;
+var correction_timeout;
+var play_timeout;
 
 var play_line = function() {
-	if (current_index > lines.length) {
+	if (current_index >= lines.length) {
 		$('#input_line').hide();
+		$('#end').show();
 		return false;
 	}
-	clearTimeout(t);
+
+	clearTimeout(correction_timeout);
 	$('#correction').empty();
+
 	var current_line = lines[current_index];
-	while (current_index < lines.length && current_line.name != my_name) {
-		$('#dialog').append("<p><b>" + current_line.name + ": </b>" 
-							+ current_line.line + "</p>");
-		current_index++;
-		if (current_index < lines.length) {
-			current_line = lines[current_index];
-		} else {
-			$('#input_line').hide();
-		}
+	if (current_line.name == my_name) {
+		$('#input_line').show();
+		return false;
 	}
+
+	$('#dialog').append("<p><b>" + current_line.name + ": </b>" 
+						+ current_line.line + "</p>");
+	current_index++;
+	play_timeout = setTimeout(play_line, 500);
 };
 
 var check_line = function() {
 	console.log("checking");
-	clearTimeout(t);
+	clearTimeout(correction_timeout);
 	$('#correction').empty();
 	var input_line = $('#input_line').val();
 	if (input_line == "" || current_index >= lines.length) {
@@ -58,7 +64,7 @@ var check_line = function() {
 		dmp.diff_cleanupEfficiency(d);
 		var ds = dmp.diff_prettyHtml(d);
 		$('#correction').append(ds);
-		t = setTimeout(function() { $('#correction').empty(); }, 5000);
+		correction_timeout = setTimeout(function() { $('#correction').empty(); }, 5000);
 //		document.getElementById('outputdiv').innerHTML = ds + '<BR>Time: ' + (ms_end - ms_start) / 1000 + 's';
 
 		$('#input_line').val("");
@@ -66,6 +72,7 @@ var check_line = function() {
 };
 
 $(function() {
+	$('#end').hide();
 	console.log("loading");
     $('#input_line').on("keypress", function(e) {
 	if (e.keyCode == 13) {
@@ -92,4 +99,8 @@ $(function() {
 </form>
 
 <div id="correction">
+</div>
+
+<div id="end">
+<h2>The end</h2>
 </div>
