@@ -1,0 +1,95 @@
+<meta charset="UTF-8"> 
+<html>
+
+<head>
+  <title>LineBot</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="diff_match_patch.js"></script>
+
+<script type="text/javascript">
+var lines = [ { name: "Fairfax", line: "Hi there Elsie!" },
+			  { name: "Elsie", line: "Hi Fairfie" },
+			  { name: "Fairfax", line: "Wanna hang?" }
+			];
+
+var my_name = "Elsie";
+var current_index = 0;
+var t;
+
+var play_line = function() {
+	if (current_index > lines.length) {
+		$('#input_line').hide();
+		return false;
+	}
+	clearTimeout(t);
+	$('#correction').empty();
+	var current_line = lines[current_index];
+	while (current_index < lines.length && current_line.name != my_name) {
+		$('#dialog').append("<p><b>" + current_line.name + ": </b>" 
+							+ current_line.line + "</p>");
+		current_index++;
+		if (current_index < lines.length) {
+			current_line = lines[current_index];
+		} else {
+			$('#input_line').hide();
+		}
+	}
+};
+
+var check_line = function() {
+	console.log("checking");
+	clearTimeout(t);
+	$('#correction').empty();
+	var input_line = $('#input_line').val();
+	if (input_line == "" || current_index >= lines.length) {
+		return false;
+	}
+	if (input_line.toLowerCase() == lines[current_index].line.toLowerCase()) {
+		 $('#dialog').append("<p><b>" + lines[current_index].name + ": </b>"
+		 					+ lines[current_index].line + "</p>");
+		current_index++;
+		$('#input_line').val("");
+		// console.log(current_index);
+		play_line();
+	} else {
+		var dmp = new diff_match_patch();
+		var d = dmp.diff_main(lines[current_index].line.toLowerCase(), input_line.toLowerCase());
+		dmp.diff_cleanupSemantic(d);
+		dmp.diff_cleanupEfficiency(d);
+		var ds = dmp.diff_prettyHtml(d);
+		$('#correction').append(ds);
+		t = setTimeout(function() { $('#correction').empty(); }, 5000);
+//		document.getElementById('outputdiv').innerHTML = ds + '<BR>Time: ' + (ms_end - ms_start) / 1000 + 's';
+
+		$('#input_line').val("");
+	}
+};
+
+$(function() {
+	console.log("loading");
+    $('#input_line').on("keypress", function(e) {
+	if (e.keyCode == 13) {
+		console.log("got here");
+	    check_line();
+	    return false;
+	}
+    });
+	play_line();
+});
+  
+</script>
+
+
+</head>
+
+<body>
+
+<div id="dialog">
+</div>
+
+<form>
+<input type="text" id="input_line" />
+</form>
+
+<div id="correction">
+</div>
