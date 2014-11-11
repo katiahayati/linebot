@@ -20,7 +20,9 @@ var lines = [ ];
 var my_name = "Elsie";
 var current_index = 0;
 var correction_timeout;
+var feed_timeout;
 var play_timeout;
+var feed_words = 3;
 
 var play_line = function() {
 	if (current_index >= lines.length) {
@@ -44,6 +46,20 @@ var play_line = function() {
 	play_timeout = setTimeout(play_line, 500);
 };
 
+var feed_line = function() {
+	$('#input_line').val("");
+	clearTimeout(feed_timeout);
+	$('#fed_line').empty();
+	var current_line = lines[current_index].line;
+	var words = current_line.split(" ");
+	var message = words.slice(0, feed_words).join(" ");
+	$('#fed_line').append(message);
+	$('#fed_line').show();
+	feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
+	feed_words += 3;
+	return false;
+}
+
 var check_line = function() {
 	console.log("checking");
 	clearTimeout(correction_timeout);
@@ -52,6 +68,14 @@ var check_line = function() {
 	if (input_line == "" || current_index >= lines.length) {
 		return false;
 	}
+
+	if (input_line == "/line") {
+		feed_line();
+		return false;
+	}
+
+	feed_words = 3;
+
 	if (input_line.toLowerCase() == lines[current_index].line.toLowerCase()) {
 		 $('#dialog').append("<p><b>" + lines[current_index].name + ": </b>"
 		 					+ lines[current_index].line + "</p>");
@@ -91,6 +115,7 @@ var parse_text = function() {
 
 $(function() {
 	$('#play_ctr').hide();
+	$('#fed_line').hide();
 	$('#end').hide();
 	console.log("loading");
     $('#input_line').on("keypress", function(e) {
@@ -136,6 +161,9 @@ Name2: ...
 
 	<div id="correction">
 	</div>
+
+    <div id="fed_line">
+    </div>
 
 	<div id="end">
 	  <h2>The end</h2>
