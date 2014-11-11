@@ -7,13 +7,15 @@
   <script src="diff_match_patch.js"></script>
 
 <script type="text/javascript">
-var lines = [ { name: "Fairfax", line: "Hi there Elsie!" },
-			  { name: "Phoebe", line: "I'm here too you know!" },
-			  { name: "Elsie", line: "Hi Fairfie" },
-			  { name: "Fairfax", line: "Wanna hang?" },
-			  { name: "Elsie", line: "Sure" },
-			  { name: "Phoebe", line: "I do too!" }
-			];
+
+var lines = [ ];
+// { name: "Fairfax", line: "Hi there Elsie!" },
+// 			  { name: "Phoebe", line: "I'm here too you know!" },
+// 			  { name: "Elsie", line: "Hi Fairfie" },
+// 			  { name: "Fairfax", line: "Wanna hang?" },
+// 			  { name: "Elsie", line: "Sure" },
+// 			  { name: "Phoebe", line: "I do too!" }
+// 			];
 
 var my_name = "Elsie";
 var current_index = 0;
@@ -22,7 +24,7 @@ var play_timeout;
 
 var play_line = function() {
 	if (current_index >= lines.length) {
-		$('#input_line').hide();
+		$('#line_entry').hide();
 		$('#end').show();
 		return false;
 	}
@@ -32,7 +34,7 @@ var play_line = function() {
 
 	var current_line = lines[current_index];
 	if (current_line.name == my_name) {
-		$('#input_line').show();
+		$('#line_entry').show();
 		return false;
 	}
 
@@ -71,7 +73,24 @@ var check_line = function() {
 	}
 };
 
+var parse_text = function() {
+	var text = $('#text').val();
+	var sides = text.split("\n\n");
+	for (var i = 0; i < sides.length; i++) {
+		var side = sides[i];
+		var parts = side.split(": ");
+		var who = parts[0]; var what = parts[1];
+		lines.push({ name: who, line: what });
+	}
+	$('#text_ctr').hide();
+	$('#play_ctr').show();
+	my_name = $('#name').val();
+	play_line();
+//	return false;
+}
+
 $(function() {
+	$('#play_ctr').hide();
 	$('#end').hide();
 	console.log("loading");
     $('#input_line').on("keypress", function(e) {
@@ -81,7 +100,8 @@ $(function() {
 	    return false;
 	}
     });
-	play_line();
+	$('#text_submit').click(parse_text);
+//	play_line();
 });
   
 </script>
@@ -91,16 +111,33 @@ $(function() {
 
 <body>
 
-<div id="dialog">
+<div id="text_ctr">
+<p>Enter the lines.  Format:
+<pre>
+Name1: ... 
+[blank line]
+Name2: ...
+</pre>
+  <form>
+<p>	<textarea id="text">
+	</textarea>
+<p><b>Your character's name:</b>&nbsp;<input type="text" id="name"/>
+<p>	<input type="button" id="text_submit" value="Play"/>
+  </form>
 </div>
 
-<form>
-<input type="text" id="input_line" />
-</form>
+<div id="play_ctr">
+	<div id="dialog">
+	</div>
 
-<div id="correction">
-</div>
+	<form id="line_entry">
+	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" />
+	</form>
 
-<div id="end">
-<h2>The end</h2>
+	<div id="correction">
+	</div>
+
+	<div id="end">
+	  <h2>The end</h2>
+	</div>
 </div>
