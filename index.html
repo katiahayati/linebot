@@ -32,7 +32,9 @@ var play_line = function() {
 	}
 
 	clearTimeout(correction_timeout);
+	clearTimeout(feed_timeout);
 	$('#correction').empty();
+	$('#fed_line').empty();
 
 	var current_line = lines[current_index];
 	if (current_line.name == my_name) {
@@ -156,7 +158,7 @@ Name2: ...
 	</div>
 
 	<form id="line_entry">
-	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" />
+	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" /> (say /line for progressively more help)
 	</form>
 
 	<div id="correction">
