@@ -9,13 +9,8 @@
 <script type="text/javascript">
 
 var lines = [ ];
-// { name: "Fairfax", line: "Hi there Elsie!" },
-// 			  { name: "Phoebe", line: "I'm here too you know!" },
-// 			  { name: "Elsie", line: "Hi Fairfie" },
-// 			  { name: "Fairfax", line: "Wanna hang?" },
-// 			  { name: "Elsie", line: "Sure" },
-// 			  { name: "Phoebe", line: "I do too!" }
-// 			];
+var colors = [ "blue", "red", "green", "orange", "fuschia", "darkturquoise", "saddlebrown" ];
+var names_to_colors = [];
 
 var my_name = "Elsie";
 var current_index = 0;
@@ -33,6 +28,9 @@ var play_line = function() {
 
 	clearTimeout(correction_timeout);
 	clearTimeout(feed_timeout);
+	
+	$('#line_entry').hide();
+
 	$('#correction').empty();
 	$('#fed_line').empty();
 
@@ -42,10 +40,10 @@ var play_line = function() {
 		return false;
 	}
 
-	$('#dialog').append("<p><b>" + current_line.name + ": </b>" 
+	$('#dialog').append("<p style=\"color:" + names_to_colors[current_line.name] + "\"><b>" + current_line.name + ": </b>" 
 						+ current_line.line + "</p>");
 	current_index++;
-	play_timeout = setTimeout(play_line, 500);
+	play_timeout = setTimeout(play_line, 1000);
 };
 
 var feed_line = function() {
@@ -94,7 +92,7 @@ var check_line = function() {
 		play_line();
 	} else {
 		var dmp = new diff_match_patch();
-		var d = dmp.diff_main(sanitize(lines[current_index].line), sanitize(input_line));
+		var d = dmp.diff_main(sanitize(input_line), sanitize(lines[current_index].line));
 		dmp.diff_cleanupSemantic(d);
 		dmp.diff_cleanupEfficiency(d);
 		var ds = dmp.diff_prettyHtml(d);
@@ -108,11 +106,16 @@ var check_line = function() {
 
 var parse_text = function(str) {
 	var sides = str.split("\n\n");
+	var color_index = 0;
 	for (var i = 0; i < sides.length; i++) {
 		var side = sides[i];
 		var parts = side.split(": ");
 		var who = parts[0]; var what = parts[1];
 		lines.push({ name: who, line: what });
+		if (! names_to_colors[who]) {
+			names_to_colors[who] = colors[color_index];
+			color_index = (color_index + 1) % (colors.length);
+		}
 	}
 	$('#text_ctr').hide();
 	$('#name_ctr').show();
