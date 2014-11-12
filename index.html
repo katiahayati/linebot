@@ -12,7 +12,7 @@ var lines = [ ];
 var colors = [ "blue", "red", "green", "orange", "fuschia", "darkturquoise", "saddlebrown" ];
 var names_to_colors = [];
 
-var my_name = "Elsie";
+var my_name;
 var current_index = 0;
 var correction_timeout;
 var feed_timeout;
@@ -20,6 +20,18 @@ var play_timeout;
 var feed_words = 3;
 var previous_attempt_length = 0;
 var dmp;
+
+var do_over = function() {
+	current_index = 0;
+	clearTimeout(correction_timeout);
+	clearTimeout(feed_timeout);
+	clearTimeout(play_timeout);
+	feed_words = 3;
+	previous_attempt_length = 0;
+	$('#end').hide();
+	$('#dialog').empty();
+	play_line();
+}
 
 var play_line = function() {
 	if (current_index >= lines.length) {
@@ -207,6 +219,7 @@ $(function() {
 	$('#play_ctr').hide();
 	$('#fed_line').hide();
 	$('#end').hide();
+	$('#do_over').click(do_over);
 	console.log("loading");
     $('#input_line').on("keypress", function(e) {
 		if (e.keyCode == 13) {
@@ -241,12 +254,13 @@ $(function() {
 <body>
 
 <div id="text_ctr">
-<p>Enter the lines.  Format:
-<pre>
-Name1: ... 
-[blank line]
-Name2: ...
-</pre>
+<h1>Welcome to LineBot!</h1>
+
+<h3>First, enter the dialog you would like to run.</h3> 
+
+<p>Either type it into the text box below, or upload a text file.  A dialog from <i>Yeomen of the Guard</i> is pre-entered into the text box as an example.
+
+<p>Enter some text here then click Save...</p>
   <form>
 <p>	<textarea id="text" rows=30 cols=80>
 Fairfax: Now, listen to me -- 'tis done thus -- Mistress Elsie, there is one here who, as thou knowest, loves thee right well.
@@ -282,14 +296,14 @@ Phoebe: Why, what's all this?  Brother -- brother -- it is not seemly!
 Point: Oh, I can't let that pass!  Hold, enough, Master Leonard!  An advocate should have his fee, but methinks thou art over-paying thyself!
 
 Fairfax: Nay, that is for Elsie to say.  I promised thee I would show thee how to woo, and herein lies the proof of the virtue of my teaching.  Go thou, and apply it elsewhere!
-	</textarea>
+</textarea>
 <p><input type="button" id="text_submit" value="Save text"/>
-<p><b>OR</b> upload a text file in the same format
-<p><input type="file" id="file" /> &nbsp; &nbsp; <input type="button" id="upload" value="Upload"/>
+<p><b>OR</b> upload a text file in the same format then click Upload
+<p><input type="file" id="file" />  <input type="button" id="upload" value="Upload"/>
 </div>
 <div id="name_ctr">
-<p><b>Your character's name:</b>&nbsp;<input type="text" id="name"/>
-<p>	<input type="button" id="play" value="Play"/>
+<h2>Got it!</h2>
+<p><b>What is your character's name?</b>&nbsp;<input type="text" id="name"/>&nbsp;<input type="button" id="play" value="Let's go"/>
 </div>
   </form>
 
@@ -310,5 +324,6 @@ Fairfax: Nay, that is for Elsie to say.  I promised thee I would show thee how t
 
 	<div id="end">
 	  <h2>The end</h2>
+<input type="button" id="do_over" value="Play again?"/>
 	</div>
 </div>
