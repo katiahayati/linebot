@@ -172,12 +172,18 @@ $(function() {
 	$('#end').hide();
 	console.log("loading");
     $('#input_line').on("keypress", function(e) {
-	if (e.keyCode == 13) {
-		console.log("got here");
-	    check_line();
-	    return false;
-	}
+		if (e.keyCode == 13) {
+			console.log("got here");
+			check_line();
+			return false;
+		}
     });
+	$('#name').on("keypress", function(e) {
+		if (e.keyCode == 13) {
+			play();
+			return false;
+		}
+	});
 	$('#text_submit').click(get_text_contents);
 	$('#play').click(play);
 	$('#name_ctr').hide();
