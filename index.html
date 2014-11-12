@@ -62,6 +62,13 @@ var feed_line = function() {
 	return false;
 }
 
+var sanitize = function(str) {
+	res = str.toLowerCase();
+//	res = res.replace(/\W/g, " ");
+	res = res.replace(/\s+/g, " ");
+	return res.trim();
+}
+
 var check_line = function() {
 	console.log("checking");
 	clearTimeout(correction_timeout);
@@ -78,7 +85,7 @@ var check_line = function() {
 
 	feed_words = 3;
 
-	if (input_line.toLowerCase() == lines[current_index].line.toLowerCase()) {
+	if (sanitize(input_line) == sanitize(lines[current_index].line)) {
 		 $('#dialog').append("<p><b>" + lines[current_index].name + ": </b>"
 		 					+ lines[current_index].line + "</p>");
 		current_index++;
@@ -87,7 +94,7 @@ var check_line = function() {
 		play_line();
 	} else {
 		var dmp = new diff_match_patch();
-		var d = dmp.diff_main(lines[current_index].line.toLowerCase(), input_line.toLowerCase());
+		var d = dmp.diff_main(sanitize(lines[current_index].line), sanitize(input_line));
 		dmp.diff_cleanupSemantic(d);
 		dmp.diff_cleanupEfficiency(d);
 		var ds = dmp.diff_prettyHtml(d);
@@ -99,9 +106,8 @@ var check_line = function() {
 	}
 };
 
-var parse_text = function() {
-	var text = $('#text').val();
-	var sides = text.split("\n\n");
+var parse_text = function(str) {
+	var sides = str.split("\n\n");
 	for (var i = 0; i < sides.length; i++) {
 		var side = sides[i];
 		var parts = side.split(": ");
@@ -109,11 +115,53 @@ var parse_text = function() {
 		lines.push({ name: who, line: what });
 	}
 	$('#text_ctr').hide();
-	$('#play_ctr').show();
+	$('#name_ctr').show();
+};
+
+var get_text_contents = function() {
+	var str = $('#text').val();
+	parse_text(str);
+};
+
+var play = function() {
 	my_name = $('#name').val();
-	play_line();
+	if (!my_name) {
+		alert("Enter a name to continue");
+	} else {
+		$('#name_ctr').hide();
+		$('#play_ctr').show();
+		play_line();
+	}
 //	return false;
-}
+};
+
+var get_file = function() {
+	if (!window.FileReader) {
+		alert('Your browser is not supported');
+		return false;
+	}
+	var input = $('#file').get(0);
+
+	if (input.files.length) {
+		var textFile = input.files[0];
+		// Create a reader object
+		var reader = new FileReader();
+		// Read the file
+		reader.readAsText(textFile);
+		// When it's loaded, process it
+		$(reader).on('load', processFile);
+	} else {
+		alert("Pick a file then upload");
+	}
+};
+
+var processFile = function(e) {
+    var file = e.target.result,
+        results;
+    if (file && file.length) {
+		parse_text(file);
+    }
+};
 
 $(function() {
 	$('#play_ctr').hide();
@@ -127,7 +175,15 @@ $(function() {
 	    return false;
 	}
     });
-	$('#text_submit').click(parse_text);
+	$('#text_submit').click(get_text_contents);
+	$('#play').click(play);
+	$('#name_ctr').hide();
+	var fileInput = $('#file');
+	var uploadButton = $('#upload');
+
+	uploadButton.on('click', get_file);
+
+
 //	play_line();
 });
   
@@ -146,12 +202,52 @@ Name1: ...
 Name2: ...
 </pre>
   <form>
-<p>	<textarea id="text">
+<p>	<textarea id="text" rows=30 cols=80>
+Fairfax: Now, listen to me -- 'tis done thus -- Mistress Elsie, there is one here who, as thou knowest, loves thee right well.
+
+Point: That he does -- right well!
+
+Fairfax: He is but a man of poor estate, but he hath a loving, honest heart.  He will be a true and trusty husband to thee, and if thou wilt be his wife, thou shalt lie curled up in his heart, like a little squirrel in its nest!
+
+Point: 'Tis a pretty figure.  A maggot in a nut lies closer, but a squirrel will do.
+
+Fairfax: He knoweth that thou wast a wife -- an unloved and unloving wife, and his poor heart was near to breaking.  But now that thine unloving husband is dead, and thou art free, he would fain pray that thou woulds hearken unto him, and give
+him home that tou wouldst one day be his!
+
+Phoebe: He presses her hands -- and he whispers in her ear!  Ods bodikins, what does it mean?
+
+Fairfax: Now sweetheart, tell me -- wilt thou be this poor good fellow's wife?
+
+Elsie: If the good, brave man -- is he a brave man?
+
+Fairfax: So men say.
+
+Point: That's not true, but let it pass.
+
+Elsie: If the brave man will be content with a poor, penniless, untaught maid --
+
+Point: Widow -- but let that pass.
+
+Elsie: I will be his true and loving wife, and that with my heart of hearts!
+
+Fairfax: My own dear love!
+
+Phoebe: Why, what's all this?  Brother -- brother -- it is not seemly!
+
+Point: Oh, I can't let that pass!  Hold, enough, Master Leonard!  An advocate should have his fee, but methinks thou art over-paying thyself!
+
+Fairfax: Nay, that is for Elsie to say.  I promised thee I would show thee how to woo, and herein lies the proof of the virtue of my teaching.  Go thou, and apply it elsewhere!
 	</textarea>
-<p><b>Your character's name:</b>&nbsp;<input type="text" id="name"/>
-<p>	<input type="button" id="text_submit" value="Play"/>
-  </form>
+<p><input type="button" id="text_submit" value="Save text"/>
+<p><b>OR</b> upload a text file in the same format
+<p><input type="file" id="file" /> &nbsp; &nbsp; <input type="button" id="upload" value="Upload"/>
 </div>
+<div id="name_ctr">
+<p><b>Your character's name:</b>&nbsp;<input type="text" id="name"/>
+<p>	<input type="button" id="play" value="Play"/>
+</div>
+  </form>
+
 
 <div id="play_ctr">
 	<div id="dialog">
