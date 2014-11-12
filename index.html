@@ -51,6 +51,7 @@ var play_line = function() {
 	var current_line = lines[current_index];
 	if (current_line.name == my_name) {
 		$('#line_entry').show();
+		$('#input_line').focus();
 		return false;
 	}
 
