@@ -18,6 +18,8 @@ var correction_timeout;
 var feed_timeout;
 var play_timeout;
 var feed_words = 3;
+var previous_attempt_length = 0;
+var dmp;
 
 var play_line = function() {
 	if (current_index >= lines.length) {
@@ -47,23 +49,56 @@ var play_line = function() {
 };
 
 var feed_line = function() {
-	$('#input_line').val("");
 	clearTimeout(feed_timeout);
 	$('#fed_line').empty();
-	var current_line = lines[current_index].line;
-	var words = current_line.split(" ");
-	var message = words.slice(0, feed_words).join(" ");
-	$('#fed_line').append(message);
-	$('#fed_line').show();
-	feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
-	feed_words += 3;
-	return false;
+	var input_line = $('#input_line').val();
+	if (input_line == '/line') {
+		console.log("checking from scratch");
+		$('#input_line').val("");
+		var current_line = lines[current_index].line;
+		var words = current_line.split(" ");
+		var message = words.slice(0, feed_words).join(" ");
+		$('#fed_line').append(message);
+		$('#fed_line').show();
+		feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
+		feed_words += 3;
+		return false;
+	} else {
+		console.log("trying to be smart");
+		input_line = input_line.replace(/\/line/, "");
+		input_line = input_line.trim();
+		var current_line = lines[current_index].line;
+		var current_words = current_line.split(/\s+/);
+		var input_words = input_line.split(/\s+/);
+		if (input_words.length == previous_attempt_length) {
+			feed_words += 3;
+		} else {
+			feed_words = 3;
+		}
+		previous_attempt_length = input_words.length;
+		var prefix = current_words.slice(0, input_words.length).join(" ");
+		var prefix_diff = dmp.diff_main(sanitize(input_line), sanitize(prefix));
+		console.log(prefix);
+		dmp.diff_cleanupSemantic(prefix_diff);
+		dmp.diff_cleanupEfficiency(prefix_diff);
+		var message = current_words.slice(input_words.length, input_words.length + feed_words).join(" ");
+		$('#fed_line').append(dmp.diff_prettyHtml(prefix_diff));
+		$('#fed_line').append(" " + message);
+		$('#fed_line').show();
+		feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
+		$('#input_line').val(input_line);
+
+		return false;
+	}
 }
 
 var sanitize = function(str) {
 	res = str.toLowerCase();
 //	res = res.replace(/\W/g, " ");
+	res = res.replace(/[.!?-]+\s*$/, "");
+	res = res.replace(/\n/g, " ");
 	res = res.replace(/\s+/g, " ");
+
 	return res.trim();
 }
 
@@ -76,11 +111,12 @@ var check_line = function() {
 		return false;
 	}
 
-	if (input_line == "/line") {
+	if (input_line.match(/\/line/)) {
 		feed_line();
 		return false;
 	}
 
+	previous_attempt_length = 0;
 	feed_words = 3;
 
 	if (sanitize(input_line) == sanitize(lines[current_index].line)) {
@@ -91,7 +127,6 @@ var check_line = function() {
 		// console.log(current_index);
 		play_line();
 	} else {
-		var dmp = new diff_match_patch();
 		var d = dmp.diff_main(sanitize(input_line), sanitize(lines[current_index].line));
 		dmp.diff_cleanupSemantic(d);
 		dmp.diff_cleanupEfficiency(d);
@@ -167,6 +202,8 @@ var processFile = function(e) {
 };
 
 $(function() {
+	dmp = new diff_match_patch();
+
 	$('#play_ctr').hide();
 	$('#fed_line').hide();
 	$('#end').hide();
@@ -262,7 +299,7 @@ Fairfax: Nay, that is for Elsie to say.  I promised thee I would show thee how t
 	</div>
 
 	<form id="line_entry">
-	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" /> (say /line for progressively more help)
+	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" size=80 /> (say /line for progressively more help)
 	</form>
 
 	<div id="correction">
