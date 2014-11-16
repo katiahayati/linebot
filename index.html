@@ -165,6 +165,7 @@ var parse_text = function(str) {
 			color_index = (color_index + 1) % (colors.length);
 		}
 	}
+	$('#welcome_ctr').hide();
 	$('#text_ctr').hide();
 	$('#name_ctr').show();
 };
@@ -217,6 +218,7 @@ var processFile = function(e) {
 $(function() {
 	dmp = new diff_match_patch();
 
+	$('#text_ctr').hide();
 	$('#play_ctr').hide();
 	$('#fed_line').hide();
 	$('#end').hide();
@@ -243,6 +245,8 @@ $(function() {
 
 	uploadButton.on('click', get_file);
 
+	$('#show_upload').click(function() { $('#text_ctr').show(); $('#upload_ctr').show(); $('#textentry_ctr').hide(); });
+	$('#show_textfield').click(function() { $('#text_ctr').show(); $('#upload_ctr').hide(); $('#textentry_ctr').show(); });
 
 //	play_line();
 });
@@ -254,14 +258,19 @@ $(function() {
 
 <body>
 
+<div id="welcome_ctr">
+<h1>Welcome to LineBot</h1>
+<h2>A chatbot who runs lines with you as often as you need</h2>
+
+<p>All you need to get started is some lines you'd like to run.  Would you like to...
+<p><input type="button" id="show_upload" value="Upload a text file"/> &nbsp; or &nbsp; <input type="button" id="show_textfield" value="Type in some lines" />
+
+</div>
+
 <div id="text_ctr">
-<h1>Welcome to LineBot!</h1>
 
-<h3>First, enter the dialog you would like to run.</h3> 
-
-<p>Either type it into the text box below, or upload a text file.  A dialog from <i>Yeomen of the Guard</i> is pre-entered into the text box as an example.
-
-<p>Enter some text here then click Save...</p>
+<div id="textentry_ctr">
+<p>Enter some text here then click Save.  A dialog from <i>Yeomen of the Guard</i> is pre-populated as an example.</p>
   <form>
 <p>	<textarea id="text" rows=30 cols=80>
 Fairfax: Now, listen to me -- 'tis done thus -- Mistress Elsie, there is one here who, as thou knowest, loves thee right well.
@@ -299,11 +308,17 @@ Point: Oh, I can't let that pass!  Hold, enough, Master Leonard!  An advocate sh
 Fairfax: Nay, that is for Elsie to say.  I promised thee I would show thee how to woo, and herein lies the proof of the virtue of my teaching.  Go thou, and apply it elsewhere!
 </textarea>
 <p><input type="button" id="text_submit" value="Save text"/>
-<p><b>OR</b> upload a text file in the same format then click Upload
+</div>
+
+<div id="upload_ctr">
+<p>Choose a file to upload then click Upload.
 <p><input type="file" id="file" />  <input type="button" id="upload" value="Upload"/>
 </div>
+</div>
+
 <div id="name_ctr">
 <h2>Got it!</h2>
+<h3>Now tell us who you are, and LineBot will read every other part with you!</h3>
 <p><b>What is your character's name?</b>&nbsp;<input type="text" id="name"/>&nbsp;<input type="button" id="play" value="Let's go"/>
 </div>
   </form>
