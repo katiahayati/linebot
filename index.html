@@ -108,7 +108,7 @@ var feed_line = function() {
 var sanitize = function(str) {
 	res = str.toLowerCase();
 //	res = res.replace(/\W/g, " ");
-	res = res.replace(/[.!?-]+\s*$/, "");
+	res = res.replace(/[.!?-,]+\s*$/, "");
 	res = res.replace(/\n/g, " ");
 	res = res.replace(/\s+/g, " ");
 
