@@ -1,0 +1,323 @@
+<meta charset="UTF-8"> 
+<html>
+
+<head>
+  <title>LineBot</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="diff_match_patch.js"></script>
+  <script src="pirates.js"></script>
+  
+<script type="text/javascript">
+
+var lines = [ ];
+var colors = [ "blue", "red", "green", "orange", "fuschia", "darkturquoise", "saddlebrown" ];
+var names_to_colors = [];
+
+var my_name;
+var current_index = 0;
+var correction_timeout;
+var feed_timeout;
+var play_timeout;
+var feed_words = 3;
+var previous_attempt_length = 0;
+var dmp;
+
+var do_over = function() {
+	current_index = 0;
+	clearTimeout(correction_timeout);
+	clearTimeout(feed_timeout);
+	clearTimeout(play_timeout);
+	feed_words = 3;
+	previous_attempt_length = 0;
+	$('#end').hide();
+	$('#dialog').empty();
+	play_line();
+}
+
+var play_line = function() {
+	if (current_index >= lines.length) {
+		$('#line_entry').hide();
+		$('#end').show();
+		return false;
+	}
+
+	clearTimeout(correction_timeout);
+	clearTimeout(feed_timeout);
+	
+	$('#line_entry').hide();
+
+	$('#correction').empty();
+	$('#fed_line').empty();
+
+	var current_line = lines[current_index];
+	if (current_line.name == my_name) {
+		$('#line_entry').show();
+		$('#input_line').focus();
+		return false;
+	}
+
+	$('#dialog').append("<p style=\"color:" + names_to_colors[current_line.name] + "\"><b>" + current_line.name + ": </b>" 
+						+ current_line.line + "</p>");
+	current_index++;
+	play_timeout = setTimeout(play_line, 1000);
+};
+
+var feed_line = function() {
+	clearTimeout(feed_timeout);
+	$('#fed_line').empty();
+	var input_line = $('#input_line').val();
+	if (input_line == '/line') {
+		console.log("checking from scratch");
+		$('#input_line').val("");
+		var current_line = lines[current_index].line;
+		var words = current_line.split(" ");
+		var message = words.slice(0, feed_words).join(" ");
+		$('#fed_line').append(message);
+		$('#fed_line').show();
+		feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
+		feed_words += 3;
+		return false;
+	} else {
+		console.log("trying to be smart");
+		input_line = input_line.replace(/\/line/, "");
+		input_line = input_line.trim();
+		var current_line = lines[current_index].line;
+		var current_words = current_line.split(/\s+/);
+		var input_words = input_line.split(/\s+/);
+		if (input_words.length == previous_attempt_length) {
+			feed_words += 3;
+		} else {
+			feed_words = 3;
+		}
+		previous_attempt_length = input_words.length;
+		var prefix = current_words.slice(0, input_words.length).join(" ");
+		var prefix_diff = dmp.diff_main(sanitize(input_line), sanitize(prefix));
+		console.log(prefix);
+		dmp.diff_cleanupSemantic(prefix_diff);
+		dmp.diff_cleanupEfficiency(prefix_diff);
+		var message = current_words.slice(input_words.length, input_words.length + feed_words).join(" ");
+		$('#fed_line').append(dmp.diff_prettyHtml(prefix_diff));
+		$('#fed_line').append(" " + message);
+		$('#fed_line').show();
+		feed_timeout = setTimeout(function() { $('#fed_line').empty(); $('#fed_line').hide() }, 3000);
+		$('#input_line').val(input_line);
+
+		return false;
+	}
+}
+
+var sanitize = function(str) {
+	res = str.toLowerCase();
+//	res = res.replace(/\W/g, " ");
+	console.log("before: " +res)
+	res = res.replace(/[.!?\-]+\s*/g, " ");
+	res = res.replace(/,/g, " ");
+	res = res.replace(/;/g, " ");
+	console.log("after: "+ res)
+	res = res.replace(/\n/g, " ");
+	res = res.replace(/\s+/g, " ");
+
+	return res.trim();
+}
+
+var check_line = function() {
+	console.log("checking");
+	clearTimeout(correction_timeout);
+	$('#correction').empty();
+	var input_line = $('#input_line').val();
+	if (input_line == "" || current_index >= lines.length) {
+		return false;
+	}
+
+	if (input_line.match(/\/line/)) {
+		feed_line();
+		return false;
+	}
+
+	previous_attempt_length = 0;
+	feed_words = 3;
+
+	if (sanitize(input_line) == sanitize(lines[current_index].line)) {
+		 $('#dialog').append("<p><b>" + lines[current_index].name + ": </b>"
+		 					+ lines[current_index].line + "</p>");
+		current_index++;
+		$('#input_line').val("");
+		// console.log(current_index);
+		play_line();
+	} else {
+		var d = dmp.diff_main(sanitize(input_line), sanitize(lines[current_index].line));
+		dmp.diff_cleanupSemantic(d);
+		dmp.diff_cleanupEfficiency(d);
+		var ds = dmp.diff_prettyHtml(d);
+		$('#correction').append(ds);
+		correction_timeout = setTimeout(function() { $('#correction').empty(); }, 5000);
+//		document.getElementById('outputdiv').innerHTML = ds + '<BR>Time: ' + (ms_end - ms_start) / 1000 + 's';
+
+		$('#input_line').val("");
+	}
+};
+
+var parse_text = function() {
+    console.log("in parse text");
+    which_dialogue = $('#choose_dialogues :selected').val();
+    console.log(which_dialogue);
+    var color_index = 0;
+    lines = dialogs[which_dialogue]['lines'] 
+    for (var i = 0; i < lines.length; i++) {
+	var who = lines[i]['name']
+
+	if (! names_to_colors[who]) {
+	    names_to_colors[who] = colors[color_index];
+	    color_index = (color_index + 1) % (colors.length);
+	}
+    }
+    $('#welcome_ctr').hide();
+    $('#text_ctr').hide();
+    $('#name_ctr').show();
+};
+
+var get_text_contents = function() {
+	var str = $('#text').val();
+	parse_text(str);
+};
+
+var play = function() {
+	my_name = $('#name').val();
+	if (!my_name) {
+		alert("Enter a name to continue");
+	} else {
+		$('#name_ctr').hide();
+		$('#play_ctr').show();
+		play_line();
+	}
+//	return false;
+};
+
+var get_file = function() {
+	if (!window.FileReader) {
+		alert('Your browser is not supported');
+		return false;
+	}
+	var input = $('#file').get(0);
+
+	if (input.files.length) {
+		var textFile = input.files[0];
+		// Create a reader object
+		var reader = new FileReader();
+		// Read the file
+		reader.readAsText(textFile);
+		// When it's loaded, process it
+		$(reader).on('load', processFile);
+	} else {
+		alert("Pick a file then upload");
+	}
+};
+
+var processFile = function(e) {
+    var file = e.target.result,
+        results;
+    if (file && file.length) {
+		parse_text(file);
+    }
+};
+
+var populate_dialogues = function() {
+    console.log(dialogs.length);
+    $('#choose_dialogues').append($('<option>', { text: "Choose..." }));
+    for (var i = 0; i < dialogs.length; i++) {
+	text = dialogs[i]['title'];
+	console.log(dialogs[i]);
+	console.log(text);
+	$('#choose_dialogues').append($('<option>', {
+	    value: i,
+	    text: text
+	}));
+    }
+/*    $.each(dialogs, function (i, item) {
+	$('#choose_dialogues').append($('<option>', { 
+            value: i,
+            text : item['title'] 
+	}))});
+*/
+    $('#choose_dialogues').show();
+	
+};
+
+$(function() {
+    dmp = new diff_match_patch();
+
+    $('#choose_dialogues').hide();
+    $('#text_ctr').hide();
+    $('#play_ctr').hide();
+    $('#fed_line').hide();
+    $('#end').hide();
+    $('#do_over').click(do_over);
+    console.log("loading");
+    $('#input_line').on("keypress", function(e) {
+	if (e.keyCode == 13) {
+	    console.log("got here");
+	    check_line();
+	    return false;
+	}
+    });
+    $('#name').on("keypress", function(e) {
+	if (e.keyCode == 13) {
+	    play();
+	    return false;
+	}
+    });
+    $('#choose_dialogues').on('change', parse_text);
+
+    $('#play').click(play);
+    $('#name_ctr').hide();
+
+    populate_dialogues();
+
+
+    //	play_line();
+});
+  
+</script>
+
+
+</head>
+
+<body>
+
+<div id="welcome_ctr">
+<h1>Welcome to LineBot</h1>
+<h2>A chatbot who runs lines with you as often as you need</h2>
+
+<p>Choose a dialogue to run...</p>
+<p><select id="choose_dialogues">
+  </select>
+</p>
+</div>
+
+<div id="name_ctr">
+<h2>Got it!</h2>
+<h3>Now tell us who you are, and LineBot will read every other part with you!</h3>
+<p><b>What is your character's name?</b>&nbsp;<input type="text" id="name"/>&nbsp;<input type="button" id="play" value="Let's go"/>
+</div>
+  </form>
+
+
+<div id="play_ctr">
+	<div id="dialog">
+	</div>
+
+	<form id="line_entry">
+	  <b>Your line:</b>&nbsp;<input type="text" id="input_line" size=80 autocomplete="off" /> (say /line anytime for progressively more help)
+	</form>
+
+	<div id="correction">
+	</div>
+
+    <div id="fed_line">
+    </div>
+
+	<div id="end">
+	  <h2>The end</h2>
+<input type="button" id="do_over" value="Play again?"/>
+	</div>
+</div>
