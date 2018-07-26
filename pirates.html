@@ -164,11 +164,15 @@ var parse_text = function() {
     var color_index = 0;
     lines = dialogs[which_dialogue]['lines'] 
     for (var i = 0; i < lines.length; i++) {
-	var who = lines[i]['name']
+	var who = lines[i]['name'];
 
 	if (! names_to_colors[who]) {
 	    names_to_colors[who] = colors[color_index];
 	    color_index = (color_index + 1) % (colors.length);
+	    $('#name').append($('<option>', {
+		value: who,
+		text: who
+	    }));
 	}
     }
     $('#welcome_ctr').hide();
@@ -182,14 +186,14 @@ var get_text_contents = function() {
 };
 
 var play = function() {
-	my_name = $('#name').val();
-	if (!my_name) {
-		alert("Enter a name to continue");
-	} else {
-		$('#name_ctr').hide();
-		$('#play_ctr').show();
-		play_line();
-	}
+    my_name = $('#name :selected').val();
+    if (!my_name) {
+	alert("Enter a name to continue");
+    } else {
+	$('#name_ctr').hide();
+	$('#play_ctr').show();
+	play_line();
+    }
 //	return false;
 };
 
@@ -268,7 +272,7 @@ $(function() {
     });
     $('#choose_dialogues').on('change', parse_text);
 
-    $('#play').click(play);
+    $('#name').on('change', play);
     $('#name_ctr').hide();
 
     populate_dialogues();
@@ -297,7 +301,13 @@ $(function() {
 <div id="name_ctr">
 <h2>Got it!</h2>
 <h3>Now tell us who you are, and LineBot will read every other part with you!</h3>
-<p><b>What is your character's name?</b>&nbsp;<input type="text" id="name"/>&nbsp;<input type="button" id="play" value="Let's go"/>
+<p><b>What is your character's name?</b></p>
+<select id="name">
+  <option>Choose...</option>
+</select>
+<!--
+&nbsp;<input type="text" id="name"/>&nbsp;<input type="button" id="play" value="Let's go"/>
+-->
 </div>
   </form>
 
