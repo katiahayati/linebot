@@ -50,7 +50,7 @@ var play_line = function() {
 	$('#fed_line').empty();
 
 	var current_line = lines[current_index];
-	if (current_line.name == my_name) {
+        if (current_line.name.includes(my_name)) {
 		$('#line_entry').show();
 		$('#input_line').focus();
 		return false;
@@ -113,7 +113,8 @@ var sanitize = function(str) {
     res = res.replace(/[.!?\-]+\s*/g, " ");
     res = res.replace(/,/g, " ");
     res = res.replace(/;/g, " ");
-    res = res.replace(/–/g, " "); 
+    res = res.replace(/–/g, " ");
+    res = res.replace(/\:/g, " ");
     console.log("after: "+ res)
 	res = res.replace(/\n/g, " ");
 	res = res.replace(/\s+/g, " ");
