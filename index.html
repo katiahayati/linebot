@@ -108,11 +108,12 @@ var feed_line = function() {
 var sanitize = function(str) {
 	res = str.toLowerCase();
 //	res = res.replace(/\W/g, " ");
-	console.log("before: " +res)
-	res = res.replace(/[.!?\-]+\s*/g, " ");
+//	console.log("before: " +res)
+        res = res.replace(/\'/g, ""); // german only 
+	res = res.replace(/[.!?\-\:]+\s*/g, " ");
 	res = res.replace(/,/g, " ");
 	res = res.replace(/;/g, " ");
-	console.log("after: "+ res)
+//	console.log("after: "+ res)
 	res = res.replace(/\n/g, " ");
 	res = res.replace(/\s+/g, " ");
 
